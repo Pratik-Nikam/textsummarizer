@@ -1,0 +1,22 @@
+{% extends 'index.html' %}
+
+{% block body %}
+
+<form action="/" method="POST" enctype="multipart/form-data">{% csrf_token %}
+    <div class="row">
+        <div class="col-md-4">
+            <select class="form-control" name="source">
+                <option>Select Source type</option>
+                {% for k, v in source_type.items %}
+                <option value="{{k}}">{{v}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <input type="file" name="uploaded_file" class="form-control">
+        </div>
+        <div class="col-md-4">
+            <input type="submit" class="form-control"></div>
+        </div>
+</form>
+{% endblock %}
