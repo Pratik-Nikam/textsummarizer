@@ -1,4 +1,4 @@
-from transformers.tokenization_utils_base import TruncationStrategy
+# from transformers.tokenization_utils_base import TruncationStrategy
 from .models import Summarizer
 import speech_recognition as sr
 import subprocess
@@ -18,7 +18,7 @@ import math
 
 from .models import SourceType
 
-from transformers import BartForConditionalGeneration, BartTokenizer, BartConfig
+# from transformers import BartForConditionalGeneration, BartTokenizer, BartConfig
 
 # Loading the model and tokenizer for bart-large-cnn
 

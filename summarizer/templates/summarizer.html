@@ -21,24 +21,35 @@
                 onchange="return fileValidation()">
         </div>
         <div class="col-md-4">
-            <input id="sub" type="submit" class="form-control"></div>
+            <input id="sub" type="submit" class="form-control" value="Process Data"></div>
 
     </div>
+    <br>
+    <br>
     <div>
         <table style="width:100%">
             <tr>
                 <th>File Name</th>
+                <th>File Type</th>
                 <th>Source Data</th>
                 <th>Summary Data</th>
+                <th>Send Email</th>
             </tr>
             {% for k in data %}
             <tr>
-
-
-                <td> {{ k.file_name }} </td>
-                <td> {{ k.source_data }} </td>
-                <td> {{ k.summerized_data}} </td>
-
+                <td style="width: 20%;"> {{ k.file_name }} </td>
+                <th style="width: 10%;">{{ k.get_source_display }}</th>
+                {% if k.source_data %}
+                    <td style="width: 25%;" data="{{ k.source_data }}" class="td_data" id="source_{{k.id}}"> {{ k.source_data|truncatechars:100 }} </td>
+                {% else %}
+                    <td style="width: 25%;" data="{{ k.source_data }}" class="td_data" id="source_{{k.id}}"> - </td>
+                {% endif %}
+                {% if k.summerized_data %}
+                    <td style="width: 25%;" data="{{ k.summerized_data }}" class="summery_data" id="summery_{{k.id}}"> {{ k.summerized_data|truncatechars:100 }} </td>
+                {% else %}
+                    <td style="width: 25%;" data="{{ k.summerized_data }}" class="summery_data" id="summery_{{k.id}}"> - </td>
+                {% endif %}
+                <th style="width: 10%;"><button class="send_email" data={{k.id}} id="email_{{k.id}}"><i class="material-icons" style="font-size:36px">email</i></button></th>
             </tr>
             {% endfor%}
 
@@ -46,7 +57,43 @@
 
 
     </div>
+    <div class="modal" tabindex="-1" role="dialog" id="id_modal">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="idModalHeader"></h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" id="IdmodalBody">
+              
+            </div>
+         
+          </div>
+        </div>
+    </div>
+    <div class="modal" tabindex="-1" role="dialog" id="id_email_model">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="idModalHeader">Send Email</h5>
+            </div>
+            <div class="modal-body" id="IdmodalBody">
+              <input type="email" class="form-control" placeholder="Enter Email">
+              <br>
+              <textarea name="text_area" class="form-control" name="email_body" id="id_email_body"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary">Sen Email</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+              </div>
+          </div>
+        </div>
+    </div>
 
+
+     
 
     <script>
         var option = "None selected";
@@ -58,6 +105,12 @@
 
 
         }
+        function email_send(){
+        $('#id_email_model').modal('show');
+        // console.log(id)
+        // return false
+
+    }
 
         function fileValidation() {
             var fileInput = document.getElementById("uploadBox");
@@ -82,17 +135,52 @@
                 alert('Invalid file type');
                 fileInput.value = '';
                 return false;
-            } else {
-
-
-            }
+                
+            } 
+            
         }
 
         var submit = document.getElementById("sub");
         submit.onclick = function () {
             if (document.getElementById("uploadBox").value == "")
                 alert('No file selected');
+                return false;
+
         }
+
+        $(".td_data").click(function() {
+            id = $(this).attr('id');
+            console.log("id", id)
+            data = $("#"+id).attr('data')
+            $('#id_modal').modal('show'); 
+            $('#IdmodalBody').empty()
+            $('#IdmodalBody').append(data)
+            $('#idModalHeader').empty()
+            $('#idModalHeader').append("Source Data")
+
+  });
+
+  $(".summery_data").click(function() {
+            id = $(this).attr('id');
+            console.log("id", id)
+            data = $("#"+id).attr('data')
+            $('#id_modal').modal('show'); 
+            $('#IdmodalBody').empty()
+            $('#IdmodalBody').append(data)
+            $('#idModalHeader').empty()
+            $('#idModalHeader').append("Summary Data")
+
+  });
+
+   $(".send_email").click(function() {
+        id = $(this).attr('id');
+        $('#id_email_model').modal('show');
+        data = $("#"+id).attr('data')
+        text_data = $('#summery_'+data).attr('data')
+        $('#id_email_body').val(text_data)
+        return false
+
+   })
     </script>
 
 
