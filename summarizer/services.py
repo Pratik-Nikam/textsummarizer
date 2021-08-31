@@ -1,3 +1,4 @@
+from transformers.tokenization_utils_base import TruncationStrategy
 from .models import Summarizer
 import speech_recognition as sr
 import subprocess
@@ -14,6 +15,42 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
 import math
+
+from .models import SourceType
+
+from transformers import BartForConditionalGeneration, BartTokenizer, BartConfig
+
+# Loading the model and tokenizer for bart-large-cnn
+
+import shutil
+
+class SummaryGeneration:
+
+    def __init__(self) -> None:
+        self.tokenizer=BartTokenizer.from_pretrained('facebook/bart-large-cnn')
+        self.model=BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
+
+    def generate_summart(self, original_text):
+
+        # tokenizer=BartTokenizer.from_pretrained('facebook/bart-large-cnn')
+        # model=BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
+
+        # print(original_text)
+        # original_text = ""
+
+        # Encoding the inputs and passing them to model.generate()
+        inputs = self.tokenizer.batch_encode_plus([original_text],return_tensors='pt',truncation=True)
+        print(inputs)
+        summary_ids = self.model.generate(inputs['input_ids'], early_stopping=True)
+        # print(summary_ids, '============')
+
+        # Decoding and printing the summary
+        bart_summary = self.tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+        # print(bart_summary)
+
+        return bart_summary
+
+
 class SummarizerService:
 
     def save_uploaded_data(self, request):
@@ -23,89 +60,91 @@ class SummarizerService:
         data = dict(request.POST.items())
         del data['csrfmiddlewaretoken']
         summarizer_obj = Summarizer.objects.create(**data, uploaded_file=uploaded_file)
+        # if data.get('source') == SourceType.TEXT_FILE:
+
+
         return summarizer_obj
 
+    def read_text_file(self, file_path):
+
+
+        file_path = os.path.join(settings.MEDIA_ROOT, str(file_path))
+        # media_path = os.path.join(BASE_DIR, "media")
+        print(file_path, "---------------------------")
+
+        with open(file_path, 'r') as f:
+            data = f.read()
+
+
+
+        n_obj = SummaryGeneration()
+
+        summary_data = n_obj.generate_summart(data)
+
+        return summary_data, data
+
     def convert_video_to_wav(self, video_path, file_name):
+
         print(file_name)
         video_path = os.path.join(settings.MEDIA_ROOT, str(video_path))
         media_path = os.path.join(BASE_DIR, "media")
         print(media_path, file_name)
         print("video path", video_path)
-        # final_path = media_path, 
+        # final_path = media_path,
         # ffmpeg -i aud_rec_2.mp4 aak-swa-conv.wav
         output_path = os.path.join(settings.MEDIA_ROOT, str(file_name)+".wav")
         print("output path", output_path)
         command = f"ffmpeg -i {video_path} {output_path}"
         proc = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         out, err = proc.communicate()
-        self.convert_wav_to_text(output_path)
-        return output_path
 
-    def convert_wav_to_text(self, file_path):
-        
-        r = sr.Recognizer()
-        with sr.WavFile(file_path) as source:
-            audio = r.record(source)
+        chunks_path = str(settings.MEDIA_ROOT) +str(file_name)
+        print(chunks_path)
+        summary_data, source_data = self.process_wav_to_text(output_path,chunks_path)
+        return summary_data, source_data
 
-        # try:
-        print("Transcription: " + r.recognize_google(audio))
-        # except (LookupError, Exception) as e:
-        #     print("Could not understand audio", e)
-
-
-
-    def speech_to_text(self, video_path, file_name):
-        video_path = os.path.join(settings.MEDIA_ROOT, str(video_path))
-        output_path = os.path.join(settings.MEDIA_ROOT, str(file_name)+".wav")
-        command = f'ffmpeg -i {video_path} -ab 160k -ar 44100 -vn {output_path}'
-
-        subprocess.call(command, shell=True)
-
-        apikey = 'H6GW5-S_Hu1MtIyHtQ2SiU0UyJSyV7G8eXJLdglH8KFv'
-
-        url = 'https://api.au-syd.speech-to-text.watson.cloud.ibm.com/instances/56bff63d-0da7-49c6-b4e9-f74a5f7b2de3'
-
-        authenticator = IAMAuthenticator(apikey)
-
-        stt = SpeechToTextV1(authenticator=authenticator)
-        print(output_path)
-        stt.set_service_url(url)
- 
-        # open the audio file using pydub
-        obj = SplitWavAudioMubin(filepath=output_path)
-        obj.multiple_split(1)
+    def process_wav_to_text(self, file_path, chunks_path):
+        obj = SplitWavAudioMubin(filepath=file_path, folder=chunks_path)
+        source_data = obj.multiple_split(1)
+        print("--",source_data)
+        n_obj = SummaryGeneration()
+        summary_data = n_obj.generate_summart(source_data)
+        print(summary_data, "final_summary================")
+        print(chunks_path, "chunls ",file_path, "file path----------" )
 
 
+        try:
+            shutil.rmtree(chunks_path)
+            # os.remove(chunks_path)
+        except Exception as err:
+            print(err)
 
-        # with open(output_path,'rb') as f:
-           
-        #     res = stt.recognize(audio=f,content_type='audio/wav',model='en-AU_NarrowbandModel',continuous=True).get_result()
-        #     print(res)
-        # text = [result['alternatives'][0]['transcript'].rstrip() + '.\n' for result in res['results']]
-            
-        # print(text)
+        return summary_data, source_data
 
+    # def get_summary(self):
 
-
+    #     summary = self.generate_summart()
 
 class SplitWavAudioMubin():
-    def __init__(self, filepath):
-        self.folder = "audio_chunks"
+    def __init__(self, filepath, folder="audio_chunks"):
+        try:
+            os.mkdir(folder)
+        except OSError as error:
+            pass
+        self.folder = folder
         self.filepath = filepath
         print(self.filepath, "*********")
         self.audio = AudioSegment.from_wav(self.filepath)
-
     def get_duration(self):
         return self.audio.duration_seconds
-
     def single_split(self, from_min, to_min, split_filename):
         t1 = from_min * 60 * 1000
         t2 = to_min * 60 * 1000
         split_audio = self.audio[t1:t2]
         split_audio.export(self.folder + '\\' + split_filename, format="wav")
-
     def multiple_split(self, min_per_split):
         total_mins = math.ceil(self.get_duration() / 60)
+        text_data = ""
         for i in range(0, total_mins, min_per_split):
             split_fn = str(i) + '_' + "chunk.wav"
             self.single_split(i, i+min_per_split, split_fn)
@@ -113,15 +152,20 @@ class SplitWavAudioMubin():
             if i == total_mins - min_per_split:
                 print('All splited successfully')
             # file_path = os.path.join(settings.BASE_DIR, "\\"+'audio_chunks'+"\\"+split_fn)
-            file_path = str(settings.BASE_DIR)+"\\"+'audio_chunks'+"\\"+split_fn
-            print(file_path, "--------------->", settings.BASE_DIR) 
-            self.convert_wav_to_text(file_path=file_path)
-            
+            file_path = str(settings.BASE_DIR)+"\\"+ self.folder +"\\"+split_fn
+
+            path_ = self.folder + "\\"+ split_fn
+            print(file_path, "--------------->", settings.BASE_DIR, "path===", path_)
+            text_data += self.convert_wav_to_text(file_path=path_)
+        return text_data
+
     def convert_wav_to_text(self, file_path):
-        
         r = sr.Recognizer()
         with sr.WavFile(file_path) as source:
             audio = r.record(source)
+        # print("Transcription: " + r.recognize_google(audio))
+        return r.recognize_google(audio)
 
-        # try:
-        print("Transcription: " + r.recognize_google(audio))
+
+
+

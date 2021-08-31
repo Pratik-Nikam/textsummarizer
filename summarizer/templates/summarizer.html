@@ -3,9 +3,13 @@
 {% block body %}
 
 <form action="/" method="POST" enctype="multipart/form-data">{% csrf_token %}
+
     <div class="row">
+
         <div class="col-md-4">
-            <select class="form-control" name="source">
+
+
+            <select id="select_level" class="form-control" name="source" onchange="selectedOption(this.value)">
                 <option>Select Source type</option>
                 {% for k, v in source_type.items %}
                 <option value="{{k}}">{{v}}</option>
@@ -13,10 +17,85 @@
             </select>
         </div>
         <div class="col-md-4">
-            <input type="file" name="uploaded_file" class="form-control">
+            <input id="uploadBox" type="file" name="uploaded_file" class="form-control"
+                onchange="return fileValidation()">
         </div>
         <div class="col-md-4">
-            <input type="submit" class="form-control"></div>
-        </div>
+            <input id="sub" type="submit" class="form-control"></div>
+
+    </div>
+    <div>
+        <table style="width:100%">
+            <tr>
+                <th>File Name</th>
+                <th>Source Data</th>
+                <th>Summary Data</th>
+            </tr>
+            {% for k in data %}
+            <tr>
+
+
+                <td> {{ k.file_name }} </td>
+                <td> {{ k.source_data }} </td>
+                <td> {{ k.summerized_data}} </td>
+
+            </tr>
+            {% endfor%}
+
+        </table>
+
+
+    </div>
+
+
+    <script>
+        var option = "None selected";
+
+        function selectedOption() {
+
+            var conceptName = $('#select_level').find(":selected").text();
+            option = $('#select_level').find(":selected").text();
+
+
+        }
+
+        function fileValidation() {
+            var fileInput = document.getElementById("uploadBox");
+            var allowedExtensions =
+                /(\.mp3|\.mp4)$/i;
+            var filePath = fileInput.value;
+            // Allowing file type
+
+            if (option == "Video File")
+                var allowedExtensions =
+                    /(\.mp3|\.mp4)$/i;
+
+            else if (option == "Audio File")
+                var allowedExtensions =
+                    /(\.mp3|\.wav)$/i;
+
+            else if (option == "Text File")
+                var allowedExtensions =
+                    /(\.txt)$/i;
+
+            if (!allowedExtensions.exec(filePath)) {
+                alert('Invalid file type');
+                fileInput.value = '';
+                return false;
+            } else {
+
+
+            }
+        }
+
+        var submit = document.getElementById("sub");
+        submit.onclick = function () {
+            if (document.getElementById("uploadBox").value == "")
+                alert('No file selected');
+        }
+    </script>
+
+
 </form>
+
 {% endblock %}

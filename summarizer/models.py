@@ -14,9 +14,12 @@ class Summarizer(models.Model):
     source = models.CharField(choices=SourceType.choices, max_length=20, 
                                 null=False, blank=False, 
                                 default=SourceType.VIDEO_FILE)
-    source_data = models.CharField(max_length=100, null=True, blank=True)
+    source_data = models.TextField()
     uploaded_file = models.FileField(upload_to=file_uploaded_path, null=True, blank=True)
+    file_name = models.CharField(max_length=255)
     summerized_data = models.TextField()
-    file_meta_data = models.JSONField(default=dict)
+    create_date = models.DateTimeField(auto_now_add=True)
+    update_date = models.DateTimeField(auto_now=True)
+   #  file_meta_data = models.JSONField(default=dict)
 
 
