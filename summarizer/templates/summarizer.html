@@ -80,10 +80,10 @@
               <h5 class="modal-title" id="idModalHeader">Send Email</h5>
             </div>
             <div class="modal-body" id="IdmodalBody">
-                <input type="text" name="file_name" id="id_file_name" hidden>
+                <input type="text" id="id_file_name" hidden>
               <input type="email" class="form-control" placeholder="Enter Email" id="id_email_reciver">
               <br>
-              <textarea name="text_area" class="form-control" name="email_body" id="id_email_body"></textarea>
+              <textarea class="form-control" id="id_email_body"></textarea>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" onclick="submit_email()">Send Email</button>
@@ -145,7 +145,7 @@
         submit.onclick = function () {
             if (document.getElementById("uploadBox").value == "")
                 alert('No file selected');
-                return false;
+                // return false;
 
         }
 
