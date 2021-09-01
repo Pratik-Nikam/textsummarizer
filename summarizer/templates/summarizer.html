@@ -220,6 +220,9 @@
         console.log(email)
         let email_body = $('#id_email_body').val()
        let file_name = $('#id_file_name').val()
+       if (email === true) {
+
+      
        $.ajax({
                 url: '/email/',
                 type: 'POST',
@@ -231,6 +234,12 @@
                     $('#id_email_model').modal('hide');
                  }
                 })
+       }
+       else{
+        $('#id_email_model').modal('hide');
+
+        alert("Invalid Email")
+       }
    }
     </script>
 
