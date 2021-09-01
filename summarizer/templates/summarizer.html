@@ -37,7 +37,7 @@
             </tr>
             {% for k in data %}
             <tr>
-                <td style="width: 20%;"> {{ k.file_name }} </td>
+                <td style="width: 20%;" id="uploaded_{{k.id}}"  data="{{ k.file_name }}"> {{ k.file_name }} </td>
                 <th style="width: 10%;">{{ k.get_source_display }}</th>
                 {% if k.source_data %}
                     <td style="width: 25%;" data="{{ k.source_data }}" class="td_data" id="source_{{k.id}}"> {{ k.source_data|truncatechars:100 }} </td>
@@ -80,12 +80,13 @@
               <h5 class="modal-title" id="idModalHeader">Send Email</h5>
             </div>
             <div class="modal-body" id="IdmodalBody">
-              <input type="email" class="form-control" placeholder="Enter Email">
+                <input type="text" name="file_name" id="id_file_name" hidden>
+              <input type="email" class="form-control" placeholder="Enter Email" id="id_email_reciver">
               <br>
               <textarea name="text_area" class="form-control" name="email_body" id="id_email_body"></textarea>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary">Sen Email</button>
+                <button type="button" class="btn btn-primary" onclick="submit_email()">Send Email</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
               </div>
           </div>
@@ -178,9 +179,25 @@
         data = $("#"+id).attr('data')
         text_data = $('#summery_'+data).attr('data')
         $('#id_email_body').val(text_data)
+        file_name = $('#uploaded_'+data).attr('data')
+        $('#id_file_name').val(file_name)
         return false
 
    })
+
+   function submit_email(){
+        let email_receiver = $('#id_email_reciver').val()
+        let email_body = $('#id_email_body').val()
+       let file_name = $('#id_file_name').val()
+       $.ajax({
+                url: '/email/',
+                type: 'POST',
+                data: JSON.stringify({"email_body": email_body, "email_receiver": email_receiver, "file_name": file_name}),
+                success: function (data) {
+                    console.log("ffhfhgfh")
+                 }
+                })
+   }
     </script>
 
 
