@@ -7,6 +7,12 @@ import os
 from textsummarizer.settings import BASE_DIR
 import subprocess
 
+from email.utils import formataddr
+import email
+import smtplib
+from email.mime.text import MIMEText
+import traceback
+
 from ibm_watson import SpeechToTextV1
 
 from ibm_watson.websocket import RecognizeCallback, AudioSource
@@ -167,5 +173,28 @@ class SplitWavAudioMubin():
         return r.recognize_google(audio)
 
 
-
+def sendMail(recipients, subject, message): # recipients - list of emails. Eg: ['john.doe@example.com', 'john.smith@example.co.uk']
+    server = None
+    if recipients == None or len(recipients) <= 0:
+        raise ValueError("No recipients: {}".format(recipients))
+    try:
+        server = smtplib.SMTP('outbound.cisco.com', 25)
+        # server.set_debuglevel(True) # show communication with the server
+        EMAIL_FROM_NAME = 'TextSummarizer'
+        EMAIL_FROM_ADDRESS = 'textsummarizer@cisco.com'
+        message = MIMEText(message, "html")
+        message["To"] = ", ".join(recipients) #email.utils.formataddr(("", toEmail))
+        message["From"] = email.utils.formataddr((EMAIL_FROM_NAME, EMAIL_FROM_ADDRESS))
+        message["Subject"] = subject
+    
+        print("Recipients: {}".format(message["To"]), flush=True)
+        server.sendmail(EMAIL_FROM_ADDRESS, recipients, message.as_string())
+        return 0
+    except Exception:
+        print("Exception while sending mail to: {}".format(recipients))
+        traceback.print_exc()
+        return -1
+    finally:
+        if server != None: server.quit()
+        
 

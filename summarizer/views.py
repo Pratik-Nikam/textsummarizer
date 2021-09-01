@@ -1,9 +1,10 @@
+from email import message
 from django.shortcuts import render
 from .models import SourceType, Summarizer
-from .services import SummarizerService
+from .services import SummarizerService, sendMail
 # Create your views here.
 from django.views import View
-
+from django.http import JsonResponse
 
 class SummarizerView(View, SummarizerService):
     template_name = 'summarizer.html'
@@ -40,5 +41,18 @@ class SummarizerView(View, SummarizerService):
 
 
 
+class EmailSummary(View):
 
+    def post(self, request):
+        data = dict(request.POST.items())
+        print(data)
+        recipients = request.POST.get('email_receiver')
+        message = request.POST.get('email_body')
+        
+        subject = f"Summary for the input file {request.POST.get('file_name')}"
+        print(recipients, type(recipients))
+
+        sendMail([recipients], subject, message)
+
+        return JsonResponse({'status':"success"})
 
