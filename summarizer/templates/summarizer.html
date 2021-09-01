@@ -184,7 +184,20 @@
         return false
 
    })
-
+   const getCookie = (cname) => {
+        let name = cname + "=";
+        let ca = document.cookie.split(";");
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == " ") {
+            c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return;
+        }
    function submit_email(){
         let email_receiver = $('#id_email_reciver').val()
         let email_body = $('#id_email_body').val()
@@ -192,6 +205,9 @@
        $.ajax({
                 url: '/email/',
                 type: 'POST',
+                headers: {
+            "X-CSRFToken": getCookie("csrftoken")
+            },
                 data: JSON.stringify({"email_body": email_body, "email_receiver": email_receiver, "file_name": file_name}),
                 success: function (data) {
                     console.log("ffhfhgfh")
